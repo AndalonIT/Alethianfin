@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Alethiafin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        lilaPrincipal: '#C5A7D3',
+                        lilaClaro: '#E6D8ED',
+                        negroProfundo: '#0B0B0D',
+                        negroSuave: '#1A1A1D',
+                        grisOscuro: '#2A2A2E',
+                        grisMedio: '#9A9AA0',
+                        grisClaro: '#F2F2F4',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* CORRECCIÓN WEB: Se elimina overflow:hidden para permitir que la pantalla baje naturalmente */
+        body { font-family: 'Inter', sans-serif; min-height: 100vh; letter-spacing: -0.01em; }
+        .view-section { display: none; min-height: 100vh; }
+        .view-section.active { display: flex; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        input, select { font-size: 14px !important; }
+        .alert-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+    </style>
+</head>
+<body class="bg-grisClaro text-grisOscuro font-sans">
+
+    <section id="view-login" class="view-section active items-center justify-center p-6 bg-negroProfundo w-full">
+        <div class="w-full max-w-md bg-white p-10 rounded-[3.5rem] shadow-2xl">
+            <div class="text-center mb-10">
+                <img src="LOGO.jpeg" alt="Logo SmartExpense" class="w-24 h-24 mx-auto mb-4 object-contain">
+                <h2 class="text-3xl font-black text-negroProfundo tracking-tight">Alethiafin</h2>
+                <p class="text-grisMedio mt-2 italic text-sm font-medium">Control Inteligente</p>
+            </div>
+            <div class="space-y-4">
+                <input type="text" id="user" value="Paola" class="w-full p-5 bg-grisClaro rounded-2xl border-none focus:ring-2 focus:ring-lilaPrincipal font-semibold outline-none text-grisOscuro">
+                <input type="password" id="pass" value="1234" class="w-full p-5 bg-grisClaro rounded-2xl border-none focus:ring-2 focus:ring-lilaPrincipal font-semibold outline-none text-grisOscuro">
+                <button onclick="login()" class="w-full bg-lilaPrincipal text-negroProfundo font-extrabold py-5 rounded-2xl shadow-xl hover:opacity-90 transition-all uppercase tracking-wider">Iniciar Sesión</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="view-main" class="view-section flex-col lg:flex-row w-full">
+        <aside class="w-full lg:w-[420px] bg-white border-r border-grisClaro flex flex-col lg:h-screen lg:sticky lg:top-0 shadow-xl z-20 overflow-y-auto no-scrollbar">
+            <header class="p-8 border-b border-grisClaro bg-white sticky top-0 z-30">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-black tracking-tighter text-lilaPrincipal uppercase italic">Control Anual</h2>
+                    <button onclick="logout()" class="text-[10px] font-black text-grisMedio hover:text-red-500 uppercase tracking-widest transition-colors">Salir</button>
+                </div>
+                <button id="open-register-btn" onclick="openRegisterModal()" class="w-full bg-negroProfundo text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-negroSuave transition-all">Registrar Nuevo Cliente</button>
+            </header>
+            <div id="client-list" class="p-4 space-y-4 bg-grisClaro/30 flex-grow"></div>
+        </aside>
+
+        <main class="flex-grow bg-white min-h-screen relative p-4 lg:p-0 overflow-y-auto">
+            <div id="welcome-laptop" class="hidden lg:flex flex-col items-center justify-center h-full text-grisMedio p-8">
+                <img src="LOGO.jpeg" alt="Logo Alethiafin Grande" class="w-56 h-56 object-contain mb-8 opacity-90">
+                <p class="font-extrabold uppercase tracking-[0.25em] text-center text-sm max-w-md leading-relaxed">Selecciona una cuenta de cliente para su control</p>
+            </div>
+
+            <div id="client-detail-container" class="hidden opacity-0 transition-opacity duration-300 w-full">
+                <header id="client-header" class="p-10 bg-negroProfundo text-white lg:rounded-br-[4rem] sticky top-0 z-10 shadow-2xl border-b border-grisOscuro"></header>
+                
+                <div class="p-4 lg:p-12 grid lg:grid-cols-2 gap-10 w-full">
+                    <div class="space-y-6">
+                        <div class="bg-lilaClaro p-6 rounded-[2rem] border border-white shadow-sm sticky top-28 lg:top-40 z-10">
+                            <h3 class="text-xs font-black text-grisOscuro uppercase tracking-widest mb-4 italic">Sincronizar Movimiento</h3>
+                            
+                            <div class="grid grid-cols-2 gap-3 mb-3">
+                                <select id="exp-month" class="p-4 bg-white rounded-xl outline-none font-bold text-sm shadow-sm text-grisOscuro">
+                                    <option value="Enero">Enero</option><option value="Febrero">Febrero</option>
+                                    <option value="Marzo">Marzo</option><option value="Abril">Abril</option>
+                                    <option value="Mayo">Mayo</option><option value="Junio">Junio</option>
+                                    <option value="Julio">Julio</option><option value="Agosto">Agosto</option>
+                                    <option value="Septiembre">Septiembre</option><option value="Octubre">Octubre</option>
+                                    <option value="Noviembre">Noviembre</option><option value="Diciembre">Diciembre</option>
+                                </select>
+                                <input type="number" id="exp-amount" placeholder="Monto $" class="p-4 bg-white rounded-xl outline-none shadow-sm font-black text-lg text-grisOscuro">
+                            </div>
+
+                            <select id="exp-desc" class="w-full p-4 bg-white rounded-xl mb-6 outline-none shadow-sm font-semibold text-grisOscuro">
+                                <option value="" disabled selected>Seleccione Categoría</option>
+                                <optgroup label="GASTOS FIJOS">
+                                    <option value="Vivienda (Hipoteca/Renta)">Vivienda (Hipoteca/Renta)</option>
+                                    <option value="Servicios (Luz/Agua/Gas)">Servicios (Luz/Agua/Gas)</option>
+                                    <option value="Alimentos (Súper/Mercado)">Alimentos (Súper/Mercado)</option>
+                                    <option value="Higiene Personal y Casa">Higiene Personal y Casa</option>
+                                    <option value="Transporte y Gasolina">Transporte y Gasolina</option>
+                                    <option value="Educación">Educación</option>
+                                    <option value="Seguros">Seguros</option>
+                                    <option value="Salud/Médico">Salud/Médico</option>
+                                    <option value="Comunicación (Celular/Internet)">Comunicación (Celular/Internet)</option>
+                                    <option value="Vestimenta">Vestimenta</option>
+                                    <option value="Cuidado Personal">Cuidado Personal</option>
+                                    <option value="Entretenimiento">Entretenimiento</option>
+                                    <option value="Ahorro/Fondo">Ahorro/Fondo</option>
+                                </optgroup>
+                                <optgroup label="LISTADO 1: COMPROMISOS VARIABLES">
+                                    <option value="Pago a deudas (TDC, Préstamos)">Pago a deudas (TDC, Préstamos)</option>
+                                    <option value="Apoyo doméstico / Lavandería">Apoyo doméstico / Lavandería</option>
+                                    <option value="Cuidado de los hijos">Cuidado de los hijos</option>
+                                    <option value="Membresías (Gimnasio, Netflix, Cable)">Membresías (Gimnasio, Netflix, Cable)</option>
+                                    <option value="Mascotas">Mascotas</option>
+                                    <option value="Apoyo a familias">Apoyo a familias</option>
+                                    <option value="Alimentos fuera de casa (Restaurantes)">Alimentos fuera de casa (Restaurantes)</option>
+                                    <option value="Entretenimiento y salidas">Entretenimiento y salidas</option>
+                                    <option value="Vacaciones / Viajes">Vacaciones / Viajes</option>
+                                    <option value="Regalos de cumpleaños o Navidad">Regalos de cumpleaños o Navidad</option>
+                                    <option value="Imprevistos">Imprevistos</option>
+                                </optgroup>
+                                <optgroup label="LISTADO 2: OTROS">
+                                    <option value="Inversiones">Inversiones</option>
+                                    <option value="Mantenimiento auto">Mantenimiento auto</option>
+                                    <option value="Mantenimiento casa">Mantenimiento casa</option>
+                                    <option value="Suscripciones software / apps">Suscripciones software / apps</option>
+                                    <option value="Licencias y Tenencias / Impuestos">Licencias y Tenencias / Impuestos</option>
+                                    <option value="Donaciones / Beneficencia">Donaciones / Beneficencia</option>
+                                    <option value="Gustos / Antojos">Gustos / Antojos</option>
+                                    <option value="Tecnología / Gadgets">Tecnología / Gadgets</option>
+                                    <option value="Muebles / Decoración">Muebles / Decoración</option>
+                                    <option value="Otros no especificados">Otros no especificados</option>
+                                </optgroup>
+                            </select>
+
+                            <button onclick="addExpenseToClient()" class="w-full bg-lilaPrincipal text-negroProfundo font-black py-5 rounded-2xl shadow-xl hover:opacity-90 transition-all uppercase tracking-tighter text-sm">Sincronizar Gasto</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="font-black text-grisOscuro text-xl italic underline decoration-lilaPrincipal decoration-4">Movimientos Anuales</h3>
+                            <button onclick="exportToExcel()" class="text-[10px] bg-lilaPrincipal text-negroProfundo px-4 py-2 rounded-full font-black uppercase shadow-lg hover:opacity-90 transition-all">Exportar CSV</button>
+                        </div>
+                        <div id="client-expense-list" class="space-y-4"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </section>
+
+    <section id="view-register" class="view-section items-center justify-center p-6 bg-negroProfundo/90 backdrop-blur-sm fixed inset-0 z-[100] overflow-y-auto">
+        <div class="w-full max-w-xl bg-white p-8 rounded-[3.5rem] shadow-2xl relative my-8 flex flex-col">
+            <button onclick="closeRegisterModal()" class="absolute top-6 right-6 text-grisMedio font-black hover:text-negroProfundo">CERRAR</button>
+            <h2 class="text-2xl font-black text-negroProfundo mb-1 italic tracking-tight">Nuevo Perfil Financiero</h2>
+            <p class="text-grisMedio text-xs mb-6 uppercase font-bold tracking-widest">Configuración inicial</p>
+            
+            <div class="space-y-4 flex-grow">
+                <input type="text" id="reg-name" placeholder="Nombre Completo del Cliente" class="w-full p-4 bg-grisClaro rounded-2xl outline-none font-semibold text-grisOscuro">
+                <input type="email" id="reg-email" placeholder="Correo de contacto" class="w-full p-4 bg-grisClaro rounded-2xl outline-none font-semibold text-grisOscuro">
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="text" id="reg-user" placeholder="Usuario para login" class="w-full p-4 bg-grisClaro rounded-2xl outline-none font-semibold text-grisOscuro">
+                    <input type="password" id="reg-pass" placeholder="Contraseña para login" class="w-full p-4 bg-grisClaro rounded-2xl outline-none font-semibold text-grisOscuro">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black text-grisOscuro uppercase ml-2 tracking-widest italic">Ingresos Estimados ($)</label>
+                        <input type="number" id="reg-income" placeholder="Ej. 20000" class="w-full p-4 bg-grisClaro rounded-2xl outline-none font-black text-grisOscuro">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black text-lilaPrincipal uppercase ml-2 tracking-widest italic">Presupuesto Gastos Límite ($)</label>
+                        <input type="number" id="reg-budget" placeholder="Ej. 15000" class="w-full p-4 bg-grisClaro rounded-2xl outline-none font-black text-grisOscuro">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black text-grisMedio uppercase ml-2 tracking-widest italic">Concepto Ahorro</label>
+                        <input type="text" id="reg-saving-desc" placeholder="Ej. Fondo Emergencia" class="w-full p-4 bg-grisClaro rounded-2xl outline-none font-semibold text-grisOscuro border border-dashed border-grisMedio/30">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black text-grisMedio uppercase ml-2 tracking-widest italic">Meta de Ahorro ($)</label>
+                        <input type="number" id="reg-saving-amount" placeholder="Ej. 5000" class="w-full p-4 bg-grisClaro rounded-2xl outline-none font-semibold text-grisOscuro border border-dashed border-grisMedio/30">
+                    </div>
+                </div>
+
+                <div class="border-t border-grisClaro pt-3 mt-2">
+                    <p class="text-[10px] font-black text-grisOscuro uppercase tracking-wider mb-3 italic">Asignación Base Gastos Fijos ($)</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Vivienda (Hipoteca/Renta)</label><input type="number" id="base-vivienda" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Servicios (Luz/Agua/Gas)</label><input type="number" id="base-servicios" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Alimentos (Súper/Mercado)</label><input type="number" id="base-alimentos" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Higiene Personal y Casa</label><input type="number" id="base-higiene" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Transporte y Gasolina</label><input type="number" id="base-transporte" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Educación</label><input type="number" id="base-educacion" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Seguros</label><input type="number" id="base-seguros" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Salud/Médico</label><input type="number" id="base-salud" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Comunicación (Celular/Internet)</label><input type="number" id="base-comunicacion" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Vestimenta</label><input type="number" id="base-vestimenta" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Cuidado Personal</label><input type="number" id="base-cuidadopersonal" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Entretenimiento</label><input type="number" id="base-entretenimiento" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                    </div>
+                </div>
+
+                <div class="border-t border-grisClaro pt-3 mt-2">
+                    <p class="text-[10px] font-black text-grisOscuro uppercase tracking-wider mb-3 italic text-lilaPrincipal">LISTADO 1: Compromisos Variables ($)</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Pago a deudas</label><input type="number" id="base-deudas" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Apoyo doméstico / Lavandería</label><input type="number" id="base-domestico" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Cuidado de los hijos</label><input type="number" id="base-hijos" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Membresías</label><input type="number" id="base-membresias" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Mascotas</label><input type="number" id="base-mascotas" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Apoyo a familias</label><input type="number" id="base-apoyofamilia" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Alimentos fuera de casa</label><input type="number" id="user-base-restaurantes" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Entretenimiento y salidas</label><input type="number" id="base-salidas" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Vacaciones / Viajes</label><input type="number" id="base-viajes" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Regalos (Cumpleaños/Navidad)</label><input type="number" id="base-regalos" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Imprevistos</label><input type="number" id="base-imprevistos" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                    </div>
+                </div>
+
+                <div class="border-t border-grisClaro pt-3 mt-2">
+                    <p class="text-[10px] font-black text-grisOscuro uppercase tracking-wider mb-3 italic text-lilaPrincipal">LISTADO 2: Otros ($)</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Inversiones</label><input type="number" id="base-inversiones" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Mantenimiento auto</label><input type="number" id="base-mantauto" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Mantenimiento casa</label><input type="number" id="base-mantcasa" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Suscripciones software</label><input type="number" id="base-software" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Licencias, Tenencias, Impuestos</label><input type="number" id="base-impuestos" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Donaciones / Beneficencia</label><input type="number" id="base-donaciones" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Gustos / Antojos</label><input type="number" id="base-gustos" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Tecnología / Gadgets</label><input type="number" id="base-tecnologia" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Muebles / Decoración</label><input type="number" id="base-muebles" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                        <div><label class="text-[9px] font-semibold text-grisMedio ml-1">Otros no especificados</label><input type="number" id="base-otrosno" placeholder="0" class="w-full p-3 bg-grisClaro rounded-xl outline-none text-grisOscuro font-medium"></div>
+                    </div>
+                </div>
+            </div>
+            <button onclick="registerClient()" class="w-full bg-negroProfundo text-white font-black py-5 rounded-3xl shadow-2xl hover:bg-negroSuave transition-all uppercase tracking-widest mt-4">DAR DE ALTA CUENTA</button>
+        </div>
+    </section>
+
+    <section id="view-user-client" class="view-section items-center justify-center p-6 bg-negroProfundo overflow-y-auto">
+        <div class="w-full max-w-2xl bg-white p-8 rounded-[3.5rem] shadow-2xl my-8 flex flex-col relative">
+            <div class="flex justify-between items-center border-b border-grisClaro pb-4 mb-4 flex-shrink-0">
+                <div class="flex items-center gap-3">
+                    <img src="LOGO.jpeg" alt="Logo SmartExpense" class="w-12 h-12 object-contain">
+                    <div>
+                        <h2 class="text-xl font-black text-negroProfundo">Carga de Datos</h2>
+                        <p class="text-grisMedio text-[11px] font-medium tracking-wide">Llena tu información y tus gastos operativos</p>
+                    </div>
+                </div>
+                <button onclick="logout()" class="text-xs font-black text-grisMedio hover:text-red-500 uppercase tracking-wider transition-colors">Salir</button>
+            </div>
+
+            <div class="space-y-6 flex-grow">
+                <div class="bg-grisClaro/40 p-5 rounded-3xl border border-grisClaro space-y-4">
+                    <p class="text-xs font-black text-negroProfundo uppercase tracking-wider italic">1. Información de Cuenta</p>
+                    <input type="text" id="user-client-name" placeholder="Nombre Completo del Cliente" class="w-full p-4 bg-white rounded-2xl outline-none font-semibold text-grisOscuro shadow-sm border border-grisClaro/50">
+                    <input type="email" id="user-client-email" placeholder="Correo electrónico de contacto" class="w-full p-4 bg-white rounded-2xl outline-none font-semibold text-grisOscuro shadow-sm border border-grisClaro/50">
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <input type="text" id="user-client-username" placeholder="Elige un Usuario" class="w-full p-4 bg-white rounded-2xl outline-none font-semibold text-grisOscuro shadow-sm border border-grisClaro/50">
+                        <input type="password" id="user-client-password" placeholder="Elige una Contraseña" class="w-full p-4 bg-white rounded-2xl outline-none font-semibold text-grisOscuro shadow-sm border border-grisClaro/50">
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black text-negroProfundo uppercase ml-2 tracking-widest italic">Ingresos Estimados ($)</label>
+                        <input type="number" id="user-client-income" placeholder="Monto total mensual" class="w-full p-4 bg-white rounded-2xl outline-none font-black text-grisOscuro shadow-sm border border-grisClaro/50">
+                    </div>
+                </div>
+
+                <div class="border border-grisClaro p-5 rounded-3xl space-y-4 bg-white shadow-sm">
+                    <p class="text-xs font-black text-negroProfundo uppercase tracking-wider italic">2. Desglose Inicial de Gastos ($)</p>
+                    
+                    <div class="space-y-3 bg-grisClaro/30 p-3 rounded-2xl">
+                        <p class="text-[9px] font-black text-grisOscuro uppercase tracking-wider italic">Compromisos Fijos</p>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Vivienda</label><input type="number" id="user-base-vivienda" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Servicios</label><input type="number" id="user-base-servicios" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Alimentos</label><input type="number" id="user-base-alimentos" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Higiene</label><input type="number" id="user-base-higiene" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Transporte</label><input type="number" id="user-base-transporte" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Educación</label><input type="number" id="user-base-educacion" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Seguros</label><input type="number" id="user-base-seguros" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Salud</label><input type="number" id="user-base-salud" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Comunicación</label><input type="number" id="user-base-comunicacion" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Vestimenta</label><input type="number" id="user-base-vestimenta" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Cuidado Personal</label><input type="number" id="user-base-cuidadopersonal" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Entretenimiento</label><input type="number" id="user-base-entretenimiento" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3 bg-lilaClaro/30 p-3 rounded-2xl">
+                        <p class="text-[9px] font-black text-lilaPrincipal uppercase tracking-wider italic">Compromisos Variables</p>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Pago Deudas</label><input type="number" id="user-base-deudas" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Apoyo Doméstico</label><input type="number" id="user-base-domestico" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Cuidado Hijos</label><input type="number" id="user-base-hijos" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Membresías</label><input type="number" id="user-base-membresias" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Mascotas</label><input type="number" id="user-base-mascotas" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Apoyo Familia</label><input type="number" id="user-base-apoyofamilia" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Restaurantes</label><input type="number" id="user-base-restaurantes" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Salidas</label><input type="number" id="user-base-salidas" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Viajes</label><input type="number" id="user-base-viajes" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Regalos</label><input type="number" id="user-base-regalos" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Imprevistos</label><input type="number" id="user-base-imprevistos" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3 bg-grisClaro/40 p-3 rounded-2xl">
+                        <p class="text-[9px] font-black text-grisOscuro uppercase tracking-wider mb-1 italic">Otros Rubros</p>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Inversiones</label><input type="number" id="user-base-inversiones" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Mantenimiento Auto</label><input type="number" id="user-base-mantauto" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Mantenimiento Casa</label><input type="number" id="user-base-mantcasa" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Suscripciones Apps</label><input type="number" id="user-base-software" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Impuestos</label><input type="number" id="user-base-impuestos" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Donaciones</label><input type="number" id="user-base-donaciones" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Gustos</label><input type="number" id="user-base-gustos" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Tecnología</label><input type="number" id="user-base-tecnologia" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">Muebles</label><input type="number" id="user-base-muebles" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                            <div><label class="text-[8px] font-bold text-grisMedio ml-1">No Especificados</label><input type="number" id="user-base-otrosno" placeholder="0" class="w-full p-2 bg-white rounded-xl border outline-none"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="submitClientData()" class="w-full bg-lilaPrincipal text-negroProfundo font-black py-4 rounded-3xl shadow-xl hover:opacity-90 transition-all uppercase tracking-widest text-sm mt-4 flex-shrink-0">ENVIAR INFORMACIÓN</button>
+        </div>
+    </section>
+
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-red-600 text-white px-8 py-4 rounded-2xl shadow-2xl opacity-0 transition-all z-[200] font-bold text-sm text-center min-w-[320px] uppercase italic leading-tight"></div>
+
+    <script>
+        let clients = JSON.parse(localStorage.getItem('crm_excel_v1')) || [];
+        let activeClientId = null;
+
+        function login() {
+            const userInput = document.getElementById('user').value.trim();
+            const passInput = document.getElementById('pass').value;
+
+            if(userInput === "Paola" && passInput === "1234") {
+                showSection('view-main');
+                renderDirectory();
+                return;
+            } 
+            
+            // Validación de cuentas de usuarios creadas dinámicamente
+            let matchAccount = clients.find(c => c.username && c.username === userInput && c.password === passInput);
+            
+            if(userInput === "usuario" && passInput === "1234") {
+                document.getElementById('user-client-name').value = "";
+                document.getElementById('user-client-email').value = "";
+                document.getElementById('user-client-username').value = "";
+                document.getElementById('user-client-password').value = "";
+                document.getElementById('user-client-income').value = "";
+                const uFields = [
+                    'user-base-vivienda', 'user-base-servicios', 'user-base-alimentos', 'user-base-higiene', 'user-base-transporte', 
+                    'user-base-educacion', 'user-base-seguros', 'user-base-salud', 'user-base-comunicacion', 'user-base-vestimenta', 
+                    'user-base-cuidadopersonal', 'user-base-entretenimiento', 'user-base-deudas', 'user-base-domestico', 'user-base-hijos',
+                    'user-base-membresias', 'user-base-mascotas', 'user-base-apoyofamilia', 'user-base-restaurantes', 'user-base-salidas',
+                    'user-base-viajes', 'user-base-regalos', 'user-base-imprevistos', 'user-base-inversiones', 'user-base-mantauto',
+                    'user-base-mantcasa', 'user-base-software', 'user-base-impuestos', 'user-base-donaciones', 'user-base-gustos',
+                    'user-base-tecnologia', 'user-base-muebles', 'user-base-otrosno'
+                ];
+                uFields.forEach(id => document.getElementById(id).value = "");
+                showSection('view-user-client');
+            } else if (matchAccount) {
+                showSection('view-main');
+                openClient(matchAccount.id);
+                // Ocultar barra lateral administrativa para el cliente por privacidad
+                document.querySelector('aside').style.display = 'none';
+            } else {
+                showToast("Credenciales incorrectas", "bg-red-600");
+            }
+        }
+
+        function showSection(id) {
+            document.querySelectorAll('.view-section').forEach(s => {
+                s.classList.remove('active');
+                s.style.display = 'none';
+            });
+            document.querySelector('aside').style.display = 'flex';
+            const target = document.getElementById(id);
+            target.classList.add('active');
+            if(id === 'view-main' || id === 'view-user-client' || id === 'view-login') target.style.display = 'flex';
+        }
+
+        function openRegisterModal() {
+            document.getElementById('view-register').style.display = 'flex';
+            document.getElementById('view-register').classList.add('active');
+        }
+
+        function closeRegisterModal() {
+            document.getElementById('view-register').style.display = 'none';
+            document.getElementById('view-register').classList.remove('active');
+        }
+
+        function extractBases(prefix) {
+            return {
+                "Vivienda (Hipoteca/Renta)": parseFloat(document.getElementById(prefix + 'vivienda').value) || 0,
+                "Servicios (Luz/Agua/Gas)": parseFloat(document.getElementById(prefix + 'servicios').value) || 0,
+                "Alimentos (Súper/Mercado)": parseFloat(document.getElementById(prefix + 'alimentos').value) || 0,
+                "Higiene Personal y Casa": parseFloat(document.getElementById(prefix + 'higiene').value) || 0,
+                "Transporte y Gasolina": parseFloat(document.getElementById(prefix + 'transporte').value) || 0,
+                "Educación": parseFloat(document.getElementById(prefix + 'educacion').value) || 0,
+                "Seguros": parseFloat(document.getElementById(prefix + 'seguros').value) || 0,
+                "Salud/Médico": parseFloat(document.getElementById(prefix + 'salud').value) || 0,
+                "Communication (Cellular/Internet)": parseFloat(document.getElementById(prefix + 'comunicacion').value) || 0,
+                "Vestimenta": parseFloat(document.getElementById(prefix + 'vestimenta').value) || 0,
+                "Cuidado Personal": parseFloat(document.getElementById(prefix + 'cuidadopersonal').value) || 0,
+                "Entretenimiento": parseFloat(document.getElementById(prefix + 'entretenimiento').value) || 0,
+                "Pago a deudas (TDC, Préstamos)": parseFloat(document.getElementById(prefix + 'deudas').value) || 0,
+                "Apoyo doméstico / Lavandería": parseFloat(document.getElementById(prefix + 'domestico').value) || 0,
+                "Cuidado de los hijos": parseFloat(document.getElementById(prefix + 'hijos').value) || 0,
+                "Membresías (Gimnasio, Netflix, Cable)": parseFloat(document.getElementById(prefix + 'membresias').value) || 0,
+                "Mascotas": parseFloat(document.getElementById(prefix + 'mascotas').value) || 0,
+                "Apoyo a familias": parseFloat(document.getElementById(prefix + 'apoyofamilia').value) || 0,
+                "Alimentos fuera de casa (Restaurantes)": parseFloat(document.getElementById(prefix + 'restaurantes').value) || 0,
+                "Entretenimiento y salidas": parseFloat(document.getElementById(prefix + 'salidas').value) || 0,
+                "Vacaciones / Viajes": parseFloat(document.getElementById(prefix + 'viajes').value) || 0,
+                "Regalos de cumpleaños o Navidad": parseFloat(document.getElementById(prefix + 'regalos').value) || 0,
+                "Imprevistos": parseFloat(document.getElementById(prefix + 'imprevistos').value) || 0,
+                "Inversiones": parseFloat(document.getElementById(prefix + 'inversiones').value) || 0,
+                "Mantenimiento auto": parseFloat(document.getElementById(prefix + 'mantauto').value) || 0,
+                "Mantenimiento casa": parseFloat(document.getElementById(prefix + 'mantcasa').value) || 0,
+                "Suscripciones software / apps": parseFloat(document.getElementById(prefix + 'software').value) || 0,
+                "Licencias y Tenencias / Impuestos": parseFloat(document.getElementById(prefix + 'impuestos').value) || 0,
+                "Donaciones / Beneficencia": parseFloat(document.getElementById(prefix + 'donaciones').value) || 0,
+                "Gustos / Antojos": parseFloat(document.getElementById(prefix + 'gustos').value) || 0,
+                "Tecnología / Gadgets": parseFloat(document.getElementById(prefix + 'tecnologia').value) || 0,
+                "Muebles / Decoración": parseFloat(document.getElementById(prefix + 'muebles').value) || 0,
+                "Otros no especificados": parseFloat(document.getElementById(prefix + 'otrosno').value) || 0
+            };
+        }
+
+        function registerClient() {
+            const name = document.getElementById('reg-name').value;
+            const email = document.getElementById('reg-email').value;
+            const username = document.getElementById('reg-user').value.trim();
+            const password = document.getElementById('reg-pass').value;
+            const income = parseFloat(document.getElementById('reg-income').value);
+            const budget = parseFloat(document.getElementById('reg-budget').value);
+            const savingDesc = document.getElementById('reg-saving-desc').value;
+            const savingAmount = parseFloat(document.getElementById('reg-saving-amount').value) || 0;
+
+            if(!name || isNaN(income) || isNaN(budget)) return showToast("Faltan datos requeridos", "bg-orange-500");
+
+            const baseBudgets = extractBases('base-');
+
+            // Los Movimientos Anuales se inicializan exactamente con los presupuestos asignados al dar de alta
+            const initialExpenses = [];
+            let index = 0;
+            for (let desc in baseBudgets) {
+                if (baseBudgets[desc] > 0) {
+                    initialExpenses.push({
+                        id: Date.now() + index,
+                        month: "Enero",
+                        desc: desc,
+                        amount: baseBudgets[desc], 
+                        date: new Date().toLocaleDateString()
+                    });
+                    index++;
+                }
+            }
+
+            clients.push({
+                id: Date.now(),
+                name, email, username, password, income, budget, 
+                savingDesc, savingAmount,
+                date: new Date().toLocaleDateString(),
+                baseBudgets: baseBudgets,
+                expenses: initialExpenses 
+            });
+
+            localStorage.setItem('crm_excel_v1', JSON.stringify(clients));
+            resetFields();
+            closeRegisterModal();
+            renderDirectory();
+            showToast("Cliente registrado con éxito", "bg-lilaPrincipal text-negroProfundo");
+        }
+
+        function submitClientData() {
+            const name = document.getElementById('user-client-name').value.trim();
+            const email = document.getElementById('user-client-email').value.trim();
+            const uName = document.getElementById('user-client-username').value.trim();
+            const uPass = document.getElementById('user-client-password').value;
+            const income = parseFloat(document.getElementById('user-client-income').value);
+
+            if(!name || !email || !uName || !uPass || isNaN(income)) {
+                return showToast("Por favor introduce Nombre, Correo, Usuario, Contraseña e Ingresos", "bg-red-600");
+            }
+
+            const baseBudgets = extractBases('user-base-');
+
+            const initialExpenses = [];
+            let index = 0;
+            for (let desc in baseBudgets) {
+                if (baseBudgets[desc] > 0) {
+                    initialExpenses.push({
+                        id: Date.now() + index,
+                        month: "Enero",
+                        desc: desc,
+                        amount: baseBudgets[desc],
+                        date: new Date().toLocaleDateString()
+                    });
+                    index++;
+                }
+            }
+
+            let client = {
+                id: Date.now(),
+                name, email, username: uName, password: uPass, income,
+                budget: income * 0.8, 
+                savingDesc: "Ahorro general",
+                savingAmount: 0,
+                date: new Date().toLocaleDateString(),
+                baseBudgets: baseBudgets,
+                expenses: initialExpenses
+            };
+
+            clients.push(client);
+            localStorage.setItem('crm_excel_v1', JSON.stringify(clients));
+            
+            showToast("tu informacion se envió a tu contador, te contactará en breve", "bg-emerald-600");
+            setTimeout(() => { showSection('view-login'); }, 4000);
+        }
+
+        function deleteClient(id, event) {
+            event.stopPropagation();
+            if(confirm("¿Estás seguro de eliminar este cliente?")) {
+                clients = clients.filter(c => c.id !== id);
+                localStorage.setItem('crm_excel_v1', JSON.stringify(clients));
+                if(activeClientId === id) {
+                    activeClientId = null;
+                    document.getElementById('client-detail-container').style.display = 'none';
+                    document.getElementById('welcome-laptop').style.display = 'flex';
+                }
+                renderDirectory();
+                showToast("Cliente eliminado", "bg-grisOscuro");
+            }
+        }
+
+        function renderDirectory() {
+            const list = document.getElementById('client-list');
+            list.innerHTML = clients.map(c => {
+                let currentMonthSpent = c.expenses.reduce((s, e) => s + e.amount, 0);
+                return `
+                <div onclick="openClient(${c.id})" class="group relative p-6 rounded-[2.5rem] cursor-pointer transition-all ${activeClientId === c.id ? 'bg-lilaPrincipal text-negroProfundo shadow-2xl' : 'bg-white border border-grisClaro shadow-sm hover:border-lilaPrincipal'}">
+                    <button onclick="deleteClient(${c.id}, event)" class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity bg-red-100 p-2 rounded-full hover:bg-red-500 hover:text-white text-red-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2M10 11v6M14 11v6"/></svg>
+                    </button>
+                    <div class="flex justify-between items-start mb-2 pr-6">
+                        <span class="text-[9px] font-black uppercase tracking-widest ${currentMonthSpent < 0 ? 'text-red-600' : 'text-grisOscuro'} italic">
+                            Saldo: $${currentMonthSpent.toLocaleString()}
+                        </span>
+                        <span class="text-[9px] opacity-60 font-bold">${c.date}</span>
+                    </div>
+                    <h3 class="font-black text-lg leading-tight mb-1">${c.name}</h3>
+                    <div class="flex justify-between items-center mt-3 pt-3 border-t border-grisClaro">
+                        <div><p class="text-[8px] uppercase font-black opacity-60 tracking-widest">Ingresos</p><p class="font-black text-xs italic">$${c.income.toLocaleString()}</p></div>
+                        <div class="text-right"><p class="text-[8px] uppercase font-black opacity-60 tracking-widest">Presupuesto</p><p class="font-black text-xs italic text-lilaPrincipal">$${c.budget.toLocaleString()}</p></div>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        function openClient(id) {
+            activeClientId = id;
+            const client = clients.find(c => c.id === id);
+            
+            const saldoActual = client.expenses.reduce((s, e) => s + e.amount, 0);
+            
+            let initialTotalBase = Object.values(client.baseBudgets || {}).reduce((a, b) => a + b, 0);
+            let totalSpent = initialTotalBase - saldoActual;
+
+            const ahorroAcumulado = client.expenses
+                .filter(e => e.desc === "Ahorro/Fondo")
+                .reduce((s, e) => s + e.amount, 0);
+            
+            const metaAlcanzada = client.savingAmount > 0 && ahorroAcumulado >= client.savingAmount;
+
+            const percent = Math.min((totalSpent / client.budget) * 100, 100);
+            
+            let alertMsg = "";
+            
+            client.expenses.forEach(e => {
+                if (e.amount < 0) {
+                    alertMsg = `EXCESO DETECTADO EN: ${e.desc.toUpperCase()}`;
+                }
+            });
+
+            document.getElementById('welcome-laptop').style.display = 'none';
+            const detail = document.getElementById('client-detail-container');
+            detail.style.display = 'block';
+            setTimeout(() => detail.style.opacity = '1', 10);
+
+            document.getElementById('client-header').innerHTML = `
+                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+                    <div class="flex-grow">
+                        <h2 class="text-4xl lg:text-5xl font-black tracking-tighter italic text-white">${client.name}</h2>
+                        <div class="flex flex-wrap gap-4 mt-2 font-medium">
+                            <span class="text-lilaPrincipal text-xs uppercase tracking-wider">📧 ${client.email}</span>
+                            <span class="text-white font-bold text-xs uppercase tracking-widest bg-grisOscuro px-3 py-1 rounded-full">💰 Ingreso: $${client.income.toLocaleString()}</span>
+                            ${client.savingAmount > 0 ? `
+                                <div class="flex items-center gap-2">
+                                    <span class="text-emerald-300 font-bold text-xs uppercase tracking-widest bg-white/10 px-3 py-1 rounded-full border border-emerald-500/30 italic">🎯 ${client.savingDesc}: $${client.savingAmount.toLocaleString()}</span>
+                                    ${metaAlcanzada ? '<span class="bg-emerald-500 text-negroProfundo text-[10px] font-black px-3 py-1 rounded-full shadow-lg alert-pulse">¡AHORRO CUMPLIDO!</span>' : ''}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    <div class="bg-negroSuave p-6 rounded-3xl min-w-[320px] border border-grisOscuro shadow-inner text-center">
+                        <div class="flex justify-between items-start mb-2 text-left">
+                            <p class="text-[10px] font-black uppercase text-lilaPrincipal tracking-widest">Saldo Disponible</p>
+                            <p class="text-[10px] font-black uppercase text-grisMedio">Gasto Real</p>
+                        </div>
+                        <div class="flex justify-between items-end mb-1 text-left">
+                            <p class="text-3xl font-black ${saldoActual < 0 || alertMsg !== '' ? 'text-red-400' : 'text-lilaPrincipal'}">$${saldoActual.toLocaleString()}</p>
+                            <p class="text-xl font-bold opacity-60 italic text-white">$${totalSpent.toLocaleString()}</p>
+                        </div>
+                        ${alertMsg !== "" ? `<p class="text-[9px] font-black text-red-500 uppercase alert-pulse tracking-widest mb-4">${alertMsg}</p>` : ''}
+                        <div class="w-full bg-grisOscuro h-1.5 rounded-full overflow-hidden">
+                            <div class="h-full transition-all duration-1000 ${percent >= 100 || alertMsg !== '' ? 'bg-red-500' : 'bg-lilaPrincipal'}" style="width: ${percent}%"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            renderClientExpenses();
+            renderDirectory();
+        }
+
+        function addExpenseToClient() {
+            const month = document.getElementById('exp-month').value;
+            const desc = document.getElementById('exp-desc').value;
+            const amount = parseFloat(document.getElementById('exp-amount').value);
+            
+            if(!desc || isNaN(amount) || amount <= 0) return showToast("Complete concepto y monto", "bg-orange-500");
+
+            const client = clients.find(c => c.id === activeClientId);
+
+            const existingExpense = client.expenses.find(e => e.month === month && e.desc === desc);
+
+            if (existingExpense) {
+                existingExpense.amount -= amount;
+                existingExpense.date = new Date().toLocaleDateString();
+            } else {
+                client.expenses.push({
+                    id: Date.now(),
+                    month, desc, amount: -amount,
+                    date: new Date().toLocaleDateString()
+                });
+            }
+
+            localStorage.setItem('crm_excel_v1', JSON.stringify(clients));
+            document.getElementById('exp-amount').value = "";
+            openClient(activeClientId);
+        }
+
+        function deleteExpense(expenseId) {
+            const client = clients.find(c => c.id === activeClientId);
+            if(confirm("¿Eliminar este gasto?")) {
+                client.expenses = client.expenses.filter(e => e.id !== expenseId);
+                localStorage.setItem('crm_excel_v1', JSON.stringify(clients));
+                openClient(activeClientId);
+                showToast("Gasto eliminado", "bg-grisOscuro");
+            }
+        }
+
+        function renderClientExpenses() {
+            const client = clients.find(c => c.id === activeClientId);
+            const list = document.getElementById('client-expense-list');
+            list.innerHTML = client.expenses.length === 0 ? '<p class="text-grisMedio py-10 font-bold uppercase italic text-center">Sin movimientos</p>' : 
+            client.expenses.map(e => `
+                <div class="group flex justify-between items-center bg-white p-5 rounded-2xl border border-grisClaro shadow-sm border-l-4 ${e.amount < 0 ? 'border-l-red-500' : 'border-l-lilaPrincipal'} relative">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-[8px] font-black bg-lilaClaro text-grisOscuro px-2 py-0.5 rounded uppercase">${e.month}</span>
+                            <span class="text-[10px] text-grisMedio font-bold italic underline decoration-grisClaro">${e.date}</span>
+                        </div>
+                        <p class="font-black text-grisOscuro uppercase text-xs tracking-tight">${e.desc}</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <p class="font-black text-xl text-negroProfundo italic ${e.amount < 0 ? 'text-red-500 alert-pulse' : ''}">$${e.amount.toLocaleString()}</p>
+                        <button onclick="deleteExpense(${e.id})" class="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-600">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2M10 11v6M14 11v6"/></svg>
+                        </button>
+                    </div>
+                </div>
+            `).reverse().join('');
+        }
+
+        function showToast(msg, color) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.className = `fixed bottom-10 left-1/2 -translate-x-1/2 ${color} text-white px-8 py-4 rounded-2xl shadow-2xl opacity-100 transition-all z-[200] font-bold text-sm text-center min-w-[320px] uppercase italic leading-tight`;
+            setTimeout(() => t.style.opacity = "0", 5000);
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            if(document.getElementById('client-list')) renderDirectory();
+        });
+
+        function logout() { location.reload(); }
+
+        function exportToExcel() {
+            const client = clients.find(c => c.id === activeClientId);
+            let csv = "\uFEFFMes,Fecha,Concepto,Gasto Real\n";
+            client.expenses.forEach(e => {
+                csv += `${e.month},${e.date},"${e.desc}",${e.amount}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `Reporte_${client.name}.csv`;
+            link.click();
+        }
+    </script>
+</body>
+</html>
