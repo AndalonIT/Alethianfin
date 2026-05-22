@@ -30,9 +30,8 @@
         }
     </script>
     <style>
-        /* CORRECCIÓN WEB: Se elimina overflow:hidden para permitir que la pantalla baje naturalmente */
-        body { font-family: 'Inter', sans-serif; min-height: 100vh; letter-spacing: -0.01em; }
-        .view-section { display: none; min-height: 100vh; }
+        body { font-family: 'Inter', sans-serif; min-height: 100vh; letter-spacing: -0.01em; margin: 0; padding: 0; background-color: #F2F2F4; color: #2A2A2E; }
+        .view-section { display: none; min-height: 100vh; width: 100%; }
         .view-section.active { display: flex; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         input, select { font-size: 14px !important; }
@@ -552,6 +551,7 @@
         function renderDirectory() {
             const list = document.getElementById('client-list');
             list.innerHTML = clients.map(c => {
+                // El Saldo Disponible se calcula restando del límite global lo capturado dinámicamente
                 let currentMonthSpent = c.expenses.reduce((s, e) => s + e.amount, 0);
                 return `
                 <div onclick="openClient(${c.id})" class="group relative p-6 rounded-[2.5rem] cursor-pointer transition-all ${activeClientId === c.id ? 'bg-lilaPrincipal text-negroProfundo shadow-2xl' : 'bg-white border border-grisClaro shadow-sm hover:border-lilaPrincipal'}">
@@ -650,9 +650,11 @@
             const existingExpense = client.expenses.find(e => e.month === month && e.desc === desc);
 
             if (existingExpense) {
+                // MODIFICACIÓN EXCLUSIVA SOLICITADA: Ahora RESTA en lugar de sumar
                 existingExpense.amount -= amount;
                 existingExpense.date = new Date().toLocaleDateString();
             } else {
+                // Si la categoría no tenía base configurada, asume base 0 y resta el gasto poniéndolo en negativo
                 client.expenses.push({
                     id: Date.now(),
                     month, desc, amount: -amount,
